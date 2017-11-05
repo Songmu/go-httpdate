@@ -23,9 +23,9 @@ var (
 		`(?::(\d\d))?` + // optional seconds
 		`)?` + // optional clock
 		`\s*` +
-		`([-+]?\d{2,4}|[A-Za-z]+)?` + // timezone
+		`([-+]?\d{2,4})?` + // offset
 		`\s*` +
-		`(?:\(\w+\)|\w{3,})?` + // ASCII representation of timezone.
+		`(\w+)?` + // ASCII representation of timezone.
 		`\s*$`)
 )
 
