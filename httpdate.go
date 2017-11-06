@@ -27,6 +27,16 @@ var (
 		`\s*` +
 		`(\w+)?` + // 8. ASCII representation of timezone.
 		`\s*$`)
+	ctimeAndAsctimeReg = regexp.MustCompile(`^(\w{1,3})` + // 1. month
+		`\s+` +
+		`(\d\d?)` + // 2. day
+		`\s+` +
+		`(\d\d?):(\d\d)` + // 3,4. hour:min
+		`(?::(\d\d))?` + // 5. optional seconds
+		`\s+` +
+		`(?:([A-Za-z]+)\s+)?` + // 6. optional timezone
+		`(\d+)` + // 7. year
+		`\s*$`)
 )
 
 var shortMonth2Month = map[string]time.Month{
@@ -64,7 +74,9 @@ func fourDigits2offset(str string) int {
 	return 0
 }
 
+// Str2Time detect date format from string and parse it
 func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
+	// no time zone is detected and loc is nil, UTC location is used (time.Local is better?)
 	if matches := fastReg.FindStringSubmatch(timeStr); len(matches) > 0 {
 		d := time.Date(
 			a2i(matches[3]),
@@ -123,6 +135,42 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 			}
 			return d, nil
 		}
+	}
+
+	if matches := ctimeAndAsctimeReg.FindStringSubmatch(timeStr); len(matches) > 0 {
+		var l *time.Location
+		if matches[6] != "" {
+			l2, err := time.LoadLocation(matches[6])
+			if err == nil {
+				l = l2
+			}
+		}
+		if l == nil {
+			l = loc
+			if l == nil {
+				l = time.UTC
+			}
+		}
+
+		y := a2i(matches[7])
+		if y < 100 {
+			y += 1900
+		}
+
+		d := time.Date(
+			y,
+			shortMonth2Month[matches[1]],
+			a2i(matches[2]),
+			a2i(matches[3]),
+			a2i(matches[4]),
+			a2i(matches[5]),
+			0,
+			l,
+		)
+		if loc != nil {
+			d = d.In(loc)
+		}
+		return d, nil
 	}
 
 	return time.Time{}, fmt.Errorf("not implemented")

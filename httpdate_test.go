@@ -84,6 +84,14 @@ func TestStr2Time(t *testing.T) {
 			name:  "Tests a commonly used (faulty?) date format of php cms systems",
 			input: "Thu, 03 Feb 1994 00:00:00 +0000 GMT",
 		},
+		{
+			name:  "ctime format",
+			input: "Thu Feb  3 00:00:00 GMT 1994",
+		},
+		{
+			name:  "same as ctime, except no TZ",
+			input: "Thu Feb  3 00:00:00 1994",
+		},
 	}
 	for _, tc := range testCases {
 		out, err := Str2Time(tc.input, time.UTC)
