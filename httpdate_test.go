@@ -92,6 +92,10 @@ func TestStr2Time(t *testing.T) {
 			name:  "same as ctime, except no TZ",
 			input: "Thu Feb  3 00:00:00 1994",
 		},
+		{
+			name:  "Unix 'ls -l' format",
+			input: "Feb  3 1994", // XXX also nees test for "Feb  3 00:00"
+		},
 	}
 	for _, tc := range testCases {
 		out, err := Str2Time(tc.input, time.UTC)

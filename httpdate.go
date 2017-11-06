@@ -21,22 +21,24 @@ var (
 		`(?:\s+|:)` + // separator before clock
 		`(\d\d?):(\d\d)` + // 4. 5. hour:min
 		`(?::(\d\d))?` + // 6. optional seconds
-		`)?` + // optional clock
-		`\s*` +
-		`([-+]?\d{2,4})?` + // 7. offset
-		`\s*` +
+		`)?\s*` + // optional clock
+		`([-+]?\d{2,4})?\s*` + // 7. offset
 		`(\w+)?` + // 8. ASCII representation of timezone.
 		`\s*$`)
-	ctimeAndAsctimeReg = regexp.MustCompile(`^(\w{1,3})` + // 1. month
-		`\s+` +
-		`(\d\d?)` + // 2. day
-		`\s+` +
+	ctimeAndAsctimeReg = regexp.MustCompile(`^(\w{1,3})\s+` + // 1. month
+		`(\d\d?)\s+` + // 2. day
 		`(\d\d?):(\d\d)` + // 3,4. hour:min
-		`(?::(\d\d))?` + // 5. optional seconds
-		`\s+` +
+		`(?::(\d\d))?\s+` + // 5. optional seconds
 		`(?:([A-Za-z]+)\s+)?` + // 6. optional timezone
 		`(\d+)` + // 7. year
 		`\s*$`)
+	unixLsReg = regexp.MustCompile(`^(\w{3})\s+` + // 1. month
+		`(\d\d?)\s+` + // 2. day
+		`(?:` +
+		`(\d{4})|` + // 3. year(optional)
+		`(\d{1,2}):(\d{2})` + // 4,5. hour:min
+		`(?::(\d{2}))?` + // 6 optional seconds
+		`)\s*$`)
 )
 
 var shortMonth2Month = map[string]time.Month{
@@ -171,6 +173,27 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 			d = d.In(loc)
 		}
 		return d, nil
+	}
+
+	if matches := unixLsReg.FindStringSubmatch(timeStr); len(matches) > 0 {
+		l := loc
+		if l == nil {
+			l = time.UTC
+		}
+		y := a2i(matches[3])
+		if matches[3] == "" {
+			y = time.Now().Year()
+		}
+		return time.Date(
+			y,
+			shortMonth2Month[matches[1]],
+			a2i(matches[2]),
+			a2i(matches[4]),
+			a2i(matches[5]),
+			a2i(matches[6]),
+			0,
+			l,
+		), nil
 	}
 
 	return time.Time{}, fmt.Errorf("not implemented")
