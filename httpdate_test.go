@@ -56,6 +56,34 @@ func TestStr2Time(t *testing.T) {
 			name:  "VMS dir listing format",
 			input: "03-Feb-1994 00:00",
 		},
+		{
+			name:  "old rfc850 HTTP format (no weekday, no time)",
+			input: "03-Feb-94",
+		},
+		{
+			name:  "broken rfc850 HTTP format (no weekday, no time)",
+			input: "03-Feb-1994",
+		},
+		{
+			name:  "proposed new HTTP format (no weekday, no time)",
+			input: "03 Feb 1994",
+		},
+		{
+			name:  "common logfile format (no time, no offset)",
+			input: "03/Feb/1994",
+		},
+		{
+			name:  "A few tests with extra space at various places 1",
+			input: "  03/Feb/1994      ",
+		},
+		{
+			name:  "A few tests with extra space at various places 2",
+			input: "  03   Feb   1994  0:00  ",
+		},
+		{
+			name:  "Tests a commonly used (faulty?) date format of php cms systems",
+			input: "Thu, 03 Feb 1994 00:00:00 +0000 GMT",
+		},
 	}
 	for _, tc := range testCases {
 		out, err := Str2Time(tc.input, time.UTC)
