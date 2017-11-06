@@ -284,3 +284,31 @@ func TestStr2Time_noSec(t *testing.T) {
 		}
 	}
 }
+
+func TestStr2Time_nsec(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  time.Time
+	}{
+		{
+			name:  "Nine 9 nsec",
+			input: "2006-01-02T15:04:05.999999999+00:00",
+			want:  time.Date(2006, 1, 2, 15, 4, 5, 999999999, time.UTC),
+		},
+		{
+			name:  "Third place after the decimal point",
+			input: "2006-01-02T15:04:05.012Z",
+			want:  time.Date(2006, 1, 2, 15, 4, 5, 12000000, time.UTC),
+		},
+	}
+	for _, tc := range testCases {
+		out, err := Str2Time(tc.input, time.UTC)
+		if err != nil {
+			t.Errorf("%s error should be nil but: %s", tc.name, err)
+		}
+		if !reflect.DeepEqual(out, tc.want) {
+			t.Errorf("Parse failed(%s/%s):\n out:  %+v\n want: %+v", tc.name, tc.input, out, tc.want)
+		}
+	}
+}
