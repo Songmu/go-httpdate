@@ -2,6 +2,7 @@ package httpdate
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -223,8 +224,17 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 			l = loc
 		}
 		if l == nil {
-			// default timezone
 			l = time.UTC
+		}
+		nsec := 0
+		fracStr := matches[7]
+		if fracStr != "" {
+			of := 9 - len(fracStr)
+			if of <= 0 {
+				nsec = a2i(fracStr[0:9])
+			} else {
+				nsec = a2i(fracStr) * int(math.Pow(10, float64(of)))
+			}
 		}
 		d := time.Date(
 			a2i(matches[1]),
@@ -233,7 +243,7 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 			a2i(matches[4]),
 			a2i(matches[5]),
 			a2i(matches[6]),
-			0, // XXX needs care fraction
+			nsec,
 			l,
 		)
 		if loc != nil {
