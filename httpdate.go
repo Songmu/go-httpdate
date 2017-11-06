@@ -49,7 +49,7 @@ var (
 		`(\d\d?):?(\d\d)` + // 4,5. hour:min
 		`(?::?(\d\d)(?:\.(\d+))?)?` + // 6,7. optional seconds and fractional
 		`)?\s*` + // optional clock
-		`([-+]?\d\d?:?(:?\d\d)?|Z|z)` + // 8. offset (Z is "zero meridian", i.e. GMT)
+		`([-+]?\d\d?:?(:?\d\d)?|Z|z)?` + // 8. offset (Z is "zero meridian", i.e. GMT)
 		`\s*$`)
 )
 
@@ -208,5 +208,33 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 		), nil
 	}
 
+	if matches := iso8601Reg.FindStringSubmatch(timeStr); len(matches) > 0 {
+		var l *time.Location
+		if strings.ToLower(matches[8]) == "z" {
+			l = time.UTC
+		} else if matches[8] != "" {
+			l = time.FixedZone("", fourDigits2offset(matches[8]))
+		} else {
+			l = loc
+		}
+		if l == nil {
+			// default timezone
+			l = time.UTC
+		}
+		d := time.Date(
+			a2i(matches[1]),
+			time.Month(a2i(matches[2])),
+			a2i(matches[3]),
+			a2i(matches[4]),
+			a2i(matches[5]),
+			a2i(matches[6]),
+			0, // XXX needs care fraction
+			l,
+		)
+		if loc != nil {
+			d = d.In(loc)
+		}
+		return d, nil
+	}
 	return time.Time{}, fmt.Errorf("not implemented")
 }

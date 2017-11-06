@@ -96,6 +96,42 @@ func TestStr2Time(t *testing.T) {
 			name:  "Unix 'ls -l' format",
 			input: "Feb  3 1994", // XXX also nees test for "Feb  3 00:00"
 		},
+		{
+			name:  "ISO 8601 formats 1",
+			input: "1994-02-03 00:00:00 +0000",
+		},
+		{
+			name:  "ISO 8601 formats 2",
+			input: "1994-02-03",
+		},
+		{
+			name:  "ISO 8601 formats 3",
+			input: "19940203",
+		},
+		{
+			name:  "ISO 8601 formats 4",
+			input: "1994-02-03T00:00:00+0000",
+		},
+		{
+			name:  "ISO 8601 formats 5",
+			input: "1994-02-02T23:00:00-0100",
+		},
+		{
+			name:  "ISO 8601 formats 6",
+			input: "1994-02-02T23:00:00-01:00",
+		},
+		{
+			name:  "ISO 8601 formats 7",
+			input: "1994-02-03T00:00:00 Z",
+		},
+		{
+			name:  "ISO 8601 formats 8",
+			input: "19940203T000000Z",
+		},
+		{
+			name:  "ISO 8601 formats 9",
+			input: "199402030000",
+		},
 	}
 	for _, tc := range testCases {
 		out, err := Str2Time(tc.input, time.UTC)
