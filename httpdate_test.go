@@ -95,7 +95,7 @@ func TestStr2Time(t *testing.T) {
 		},
 		{
 			name:  "Unix 'ls -l' format",
-			input: "Feb  3 1994", // XXX also nees test for "Feb  3 00:00"
+			input: "Feb  3 1994",
 		},
 		{
 			name:  "ISO 8601 formats 1",

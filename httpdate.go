@@ -59,7 +59,7 @@ var (
 		`\s*$`)
 )
 
-var shortMonth2Month = map[string]time.Month{
+var shortMon2Mon = map[string]time.Month{
 	"Jan": time.January,
 	"Feb": time.February,
 	"Mar": time.March,
@@ -79,14 +79,14 @@ func a2i(str string) int {
 	return i
 }
 
-var fourDigitsReg = regexp.MustCompile(`^([-+])?(\d\d?):?(\d\d)?$`)
+var offsetStrReg = regexp.MustCompile(`^([-+])?(\d\d?):?(\d\d)?$`)
 
-func fourDigits2offset(str string) int {
-	if matches := fourDigitsReg.FindStringSubmatch(str); len(matches) > 0 {
-		hour := a2i(matches[2])
-		min := a2i(matches[3])
+func offsetStr2offset(str string) int {
+	if m := offsetStrReg.FindStringSubmatch(str); len(m) > 0 {
+		hour := a2i(m[2])
+		min := a2i(m[3])
 		offset := hour*60*60 + min*60
-		if matches[1] == "-" {
+		if m[1] == "-" {
 			offset *= -1
 		}
 		return offset
@@ -97,14 +97,14 @@ func fourDigits2offset(str string) int {
 // Str2Time detect date format from string and parse it
 func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 	// No time zone is detected from timeStr and loc is nil, UTC location is used
-	if matches := fastReg.FindStringSubmatch(origTimeStr); len(matches) > 0 {
+	if m := fastReg.FindStringSubmatch(origTimeStr); len(m) > 0 {
 		d := time.Date(
-			a2i(matches[3]),
-			shortMonth2Month[matches[2]],
-			a2i(matches[1]),
-			a2i(matches[4]),
-			a2i(matches[5]),
-			a2i(matches[6]),
+			a2i(m[3]),
+			shortMon2Mon[m[2]],
+			a2i(m[1]),
+			a2i(m[4]),
+			a2i(m[5]),
+			a2i(m[6]),
 			0,
 			time.UTC,
 		)
@@ -116,41 +116,46 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 	timeStr := strings.TrimSpace(origTimeStr)
 	timeStr = uselessWdayReg.ReplaceAllString(timeStr, "")
 
-	if matches := mostFormatReg.FindStringSubmatch(timeStr); len(matches) > 0 {
-		maybeAMPM := strings.ToUpper(matches[8])
-		if maybeAMPM != "AM" && maybeAMPM != "PM" {
+	adjustYear := func(str string) int {
+		y := a2i(str)
+		switch {
+		case y >= 100:
+			return y
+		case y >= 69: // Unix time starts Dec 31 1969 in some time zones
+			return y + 1900
+		}
+		return y + 2000
+	}
+
+	if m := mostFormatReg.FindStringSubmatch(timeStr); len(m) > 0 {
+		switch strings.ToUpper(m[8]) {
+		case "AM", "PM":
+			// nop and through the next check
+		default:
 			var l *time.Location
-			if matches[8] != "" {
-				l2, err := time.LoadLocation(matches[8])
+			if m[8] != "" {
+				l2, err := time.LoadLocation(m[8])
 				if err == nil {
 					l = l2
 				}
 			}
-			if l == nil && matches[7] != "" {
-				l = time.FixedZone(matches[8], fourDigits2offset(matches[7]))
+			if l == nil && m[7] != "" {
+				l = time.FixedZone(m[8], offsetStr2offset(m[7]))
 			}
 			if l == nil {
-				l = loc
-				if l == nil {
+				if loc != nil {
+					l = loc
+				} else {
 					l = time.UTC
 				}
 			}
-
-			y := a2i(matches[3])
-			if y < 100 {
-				if y >= 69 { // Unix time starts Dec 31 1969 in some time zones
-					y += 1900
-				} else {
-					y += 2000
-				}
-			}
 			d := time.Date(
-				y,
-				shortMonth2Month[matches[2]],
-				a2i(matches[1]),
-				a2i(matches[4]),
-				a2i(matches[5]),
-				a2i(matches[6]),
+				adjustYear(m[3]),
+				shortMon2Mon[m[2]],
+				a2i(m[1]),
+				a2i(m[4]),
+				a2i(m[5]),
+				a2i(m[6]),
 				0,
 				l,
 			)
@@ -161,37 +166,28 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		}
 	}
 
-	if matches := ctimeAndAsctimeReg.FindStringSubmatch(timeStr); len(matches) > 0 {
+	if m := ctimeAndAsctimeReg.FindStringSubmatch(timeStr); len(m) > 0 {
 		var l *time.Location
-		if matches[6] != "" {
-			l2, err := time.LoadLocation(matches[6])
+		if m[6] != "" {
+			l2, err := time.LoadLocation(m[6])
 			if err == nil {
 				l = l2
 			}
 		}
 		if l == nil {
-			l = loc
-			if l == nil {
+			if loc != nil {
+				l = loc
+			} else {
 				l = time.UTC
 			}
 		}
-
-		y := a2i(matches[7])
-		if y < 100 {
-			if y >= 69 { // Unix time starts Dec 31 1969 in some time zones
-				y += 1900
-			} else {
-				y += 2000
-			}
-		}
-
 		d := time.Date(
-			y,
-			shortMonth2Month[matches[1]],
-			a2i(matches[2]),
-			a2i(matches[3]),
-			a2i(matches[4]),
-			a2i(matches[5]),
+			adjustYear(m[7]),
+			shortMon2Mon[m[1]],
+			a2i(m[2]),
+			a2i(m[3]),
+			a2i(m[4]),
+			a2i(m[5]),
 			0,
 			l,
 		)
@@ -201,41 +197,42 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		return d, nil
 	}
 
-	if matches := unixLsReg.FindStringSubmatch(timeStr); len(matches) > 0 {
+	if m := unixLsReg.FindStringSubmatch(timeStr); len(m) > 0 {
 		l := loc
 		if l == nil {
 			l = time.UTC
 		}
-		y := a2i(matches[3])
-		if matches[3] == "" {
+		y := a2i(m[3])
+		if m[3] == "" {
 			y = time.Now().Year()
 		}
 		return time.Date(
 			y,
-			shortMonth2Month[matches[1]],
-			a2i(matches[2]),
-			a2i(matches[4]),
-			a2i(matches[5]),
-			a2i(matches[6]),
+			shortMon2Mon[m[1]],
+			a2i(m[2]),
+			a2i(m[4]),
+			a2i(m[5]),
+			a2i(m[6]),
 			0,
 			l,
 		), nil
 	}
 
-	if matches := iso8601Reg.FindStringSubmatch(timeStr); len(matches) > 0 {
+	if m := iso8601Reg.FindStringSubmatch(timeStr); len(m) > 0 {
 		var l *time.Location
-		if strings.ToLower(matches[8]) == "z" {
+		if strings.ToLower(m[8]) == "z" {
 			l = time.UTC
-		} else if matches[8] != "" {
-			l = time.FixedZone("", fourDigits2offset(matches[8]))
+		} else if m[8] != "" {
+			l = time.FixedZone("", offsetStr2offset(m[8]))
 		} else {
-			l = loc
-		}
-		if l == nil {
-			l = time.UTC
+			if loc != nil {
+				l = loc
+			} else {
+				l = time.UTC
+			}
 		}
 		nsec := 0
-		fracStr := matches[7]
+		fracStr := m[7]
 		if fracStr != "" {
 			of := 9 - len(fracStr)
 			if of <= 0 {
@@ -245,12 +242,12 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 			}
 		}
 		d := time.Date(
-			a2i(matches[1]),
-			time.Month(a2i(matches[2])),
-			a2i(matches[3]),
-			a2i(matches[4]),
-			a2i(matches[5]),
-			a2i(matches[6]),
+			a2i(m[1]),
+			time.Month(a2i(m[2])),
+			a2i(m[3]),
+			a2i(m[4]),
+			a2i(m[5]),
+			a2i(m[6]),
 			nsec,
 			l,
 		)
@@ -260,35 +257,24 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		return d, nil
 	}
 
-	if matches := winDirReg.FindStringSubmatch(timeStr); len(matches) > 0 {
+	if m := winDirReg.FindStringSubmatch(timeStr); len(m) > 0 {
 		l := loc
 		if l == nil {
 			l = time.UTC
 		}
-		hr := a2i(matches[4])
-		switch strings.ToUpper(matches[6]) {
-		case "AM":
-			if hr == 12 {
-				hr = 0
-			}
-		case "PM":
-			if hr != 12 {
-				hr += 12
-			}
-		}
-
-		y := a2i(matches[3])
-		if y >= 69 { // Unix time starts Dec 31 1969 in some time zones
-			y += 1900
-		} else {
-			y += 2000
+		hr := a2i(m[4])
+		ampm := strings.ToUpper(m[6])
+		if ampm == "AM" && hr == 12 {
+			hr = 0
+		} else if ampm == "PM" && hr != 12 {
+			hr += 12
 		}
 		return time.Date(
-			y,
-			time.Month(a2i(matches[1])),
-			a2i(matches[2]),
+			adjustYear(m[3]),
+			time.Month(a2i(m[1])),
+			a2i(m[2]),
 			hr,
-			a2i(matches[5]),
+			a2i(m[5]),
 			0,
 			0,
 			l,
