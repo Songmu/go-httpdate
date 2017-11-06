@@ -148,3 +148,94 @@ func TestStr2Time(t *testing.T) {
 		}
 	}
 }
+
+func TestStr2Time_time(t *testing.T) {
+	expect := time.Date(1994, time.February, 3, 4, 56, 1, 0, time.UTC)
+	testCases := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "RFC1123",
+			input: "Thu, 03 Feb 1994 04:56:01 GMT",
+		},
+		{
+			name:  "old rfc850 HTTP format",
+			input: "Thursday, 03-Feb-94 04:56:01 GMT",
+		},
+		{
+			name:  "broken rfc850 HTTP format",
+			input: "Thursday, 03-Feb-1994 04:56:01 GMT",
+		},
+		{
+			name:  "common logfile format1",
+			input: "03/Feb/1994:04:56:01 0000",
+		},
+		{
+			name:  "common logfile format2",
+			input: "03/Feb/1994:05:56:01 +0100",
+		},
+		{
+			name:  "common logfile format1",
+			input: "03/Feb/1994:03:56:01 -0100",
+		},
+		{
+			name:  "HTTP format (no weekday)",
+			input: "03 Feb 1994 04:56:01 GMT",
+		},
+		{
+			name:  "old rfc850 (no weekday)",
+			input: "03-Feb-94 04:56:01 GMT",
+		},
+		{
+			name:  "broken rfc850 (no weekday)",
+			input: "03-Feb-1994 04:56:01 GMT",
+		},
+		{
+			name:  "Tests a commonly used (faulty?) date format of php cms systems",
+			input: "Thu, 03 Feb 1994 04:56:01 +0000 GMT",
+		},
+		{
+			name:  "ctime format",
+			input: "Thu Feb  3 04:56:01 GMT 1994",
+		},
+		{
+			name:  "same as ctime, except no TZ",
+			input: "Thu Feb  3 04:56:01 1994",
+		},
+		{
+			name:  "ISO 8601 formats 1",
+			input: "1994-02-03 04:56:01 +0000",
+		},
+		{
+			name:  "ISO 8601 formats 4",
+			input: "1994-02-03T04:56:01+0000",
+		},
+		{
+			name:  "ISO 8601 formats 5",
+			input: "1994-02-03T03:56:01-0100",
+		},
+		{
+			name:  "ISO 8601 formats 6",
+			input: "1994-02-03T03:56:01-01:00",
+		},
+		{
+			name:  "ISO 8601 formats 7",
+			input: "1994-02-03T04:56:01 Z",
+		},
+		{
+			name:  "ISO 8601 formats 8",
+			input: "19940203T045601Z",
+		},
+	}
+	for _, tc := range testCases {
+		out, err := Str2Time(tc.input, time.UTC)
+		if err != nil {
+			t.Errorf("%s error should be nil but: %s", tc.name, err)
+		}
+
+		if !reflect.DeepEqual(out, expect) {
+			t.Errorf("Parse failed(%s):\n out:  %+v\n want: %+v", tc.name, out, expect)
+		}
+	}
+}
