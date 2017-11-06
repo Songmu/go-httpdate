@@ -95,7 +95,7 @@ func fourDigits2offset(str string) int {
 
 // Str2Time detect date format from string and parse it
 func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
-	// no time zone is detected and loc is nil, UTC location is used (time.Local is better?)
+	// No time zone is detected from timeStr and loc is nil, UTC location is used
 	if matches := fastReg.FindStringSubmatch(timeStr); len(matches) > 0 {
 		d := time.Date(
 			a2i(matches[3]),
@@ -270,5 +270,5 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 		), nil
 	}
 
-	return time.Time{}, fmt.Errorf("not implemented")
+	return time.Time{}, fmt.Errorf("parsing time %q: parse failed")
 }
