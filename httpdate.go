@@ -39,6 +39,18 @@ var (
 		`(\d{1,2}):(\d{2})` + // 4,5. hour:min
 		`(?::(\d{2}))?` + // 6 optional seconds
 		`)\s*$`)
+	iso8601Reg = regexp.MustCompile(`^(\d{4})` + // 1. year
+		`[-\/]?` +
+		`(\d\d?)` + // 2. numerical month
+		`[-\/]?` +
+		`(\d\d?)` + // 3. day
+		`(?:` +
+		`(?:\s+|[-:Tt])` + // separator before clock
+		`(\d\d?):?(\d\d)` + // 4,5. hour:min
+		`(?::?(\d\d)(?:\.(\d+))?)?` + // 6,7. optional seconds and fractional
+		`)?\s*` + // optional clock
+		`([-+]?\d\d?:?(:?\d\d)?|Z|z)` + // 8. offset (Z is "zero meridian", i.e. GMT)
+		`\s*$`)
 )
 
 var shortMonth2Month = map[string]time.Month{
