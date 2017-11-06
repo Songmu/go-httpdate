@@ -1,6 +1,7 @@
 package httpdate
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -236,6 +237,50 @@ func TestStr2Time_time(t *testing.T) {
 
 		if !reflect.DeepEqual(out, expect) {
 			t.Errorf("Parse failed(%s):\n out:  %+v\n want: %+v", tc.name, out, expect)
+		}
+	}
+}
+
+func TestStr2Time_noSec(t *testing.T) {
+	y := time.Now().Year()
+	expect := time.Date(y, time.February, 3, 16, 56, 0, 0, time.UTC)
+	testCases := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "broken rfc850 (no weekday, no seconds)",
+			input: fmt.Sprintf("03-Feb-%d 16:56 GMT", y),
+		},
+		{
+			name:  "VMS dir listing format",
+			input: fmt.Sprintf("03-Feb-%d 16:56", y),
+		},
+		{
+			name:  "A few tests with extra space at various places 2",
+			input: fmt.Sprintf("  03   Feb   %d  16:56  ", y),
+		},
+		{
+			name:  "Unix 'ls -l' format",
+			input: "Feb  3 16:56",
+		},
+		{
+			name:  "ISO 8601 formats 9",
+			input: fmt.Sprintf("%d02031656", y),
+		},
+		{
+			name:  "Windows 'dir' format",
+			input: fmt.Sprintf("02-03-%d   4:56PM", y-2000),
+		},
+	}
+	for _, tc := range testCases {
+		out, err := Str2Time(tc.input, time.UTC)
+		if err != nil {
+			t.Errorf("%s error should be nil but: %s", tc.name, err)
+		}
+
+		if !reflect.DeepEqual(out, expect) {
+			t.Errorf("Parse failed(%s/%s):\n out:  %+v\n want: %+v", tc.name, tc.input, out, expect)
 		}
 	}
 }

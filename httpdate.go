@@ -46,7 +46,7 @@ var (
 		`[-\/]?` +
 		`(\d\d?)` + // 3. day
 		`(?:` +
-		`(?:\s+|[-:Tt])` + // separator before clock
+		`(?:\s*|[-:Tt])` + // separator before clock
 		`(\d\d?):?(\d\d)` + // 4,5. hour:min
 		`(?::?(\d\d)(?:\.(\d+))?)?` + // 6,7. optional seconds and fractional
 		`)?\s*` + // optional clock
@@ -95,9 +95,9 @@ func fourDigits2offset(str string) int {
 }
 
 // Str2Time detect date format from string and parse it
-func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
+func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 	// No time zone is detected from timeStr and loc is nil, UTC location is used
-	if matches := fastReg.FindStringSubmatch(timeStr); len(matches) > 0 {
+	if matches := fastReg.FindStringSubmatch(origTimeStr); len(matches) > 0 {
 		d := time.Date(
 			a2i(matches[3]),
 			shortMonth2Month[matches[2]],
@@ -113,7 +113,7 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 		}
 		return d, nil
 	}
-	timeStr = strings.TrimSpace(timeStr)
+	timeStr := strings.TrimSpace(origTimeStr)
 	timeStr = uselessWdayReg.ReplaceAllString(timeStr, "")
 
 	if matches := mostFormatReg.FindStringSubmatch(timeStr); len(matches) > 0 {
@@ -138,7 +138,11 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 
 			y := a2i(matches[3])
 			if y < 100 {
-				y += 1900
+				if y >= 69 { // Unix time starts Dec 31 1969 in some time zones
+					y += 1900
+				} else {
+					y += 2000
+				}
 			}
 			d := time.Date(
 				y,
@@ -174,7 +178,11 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 
 		y := a2i(matches[7])
 		if y < 100 {
-			y += 1900
+			if y >= 69 { // Unix time starts Dec 31 1969 in some time zones
+				y += 1900
+			} else {
+				y += 2000
+			}
 		}
 
 		d := time.Date(
@@ -268,8 +276,15 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 				hr += 12
 			}
 		}
+
+		y := a2i(matches[3])
+		if y >= 69 { // Unix time starts Dec 31 1969 in some time zones
+			y += 1900
+		} else {
+			y += 2000
+		}
 		return time.Date(
-			a2i(matches[3])+1900,
+			y,
 			time.Month(a2i(matches[1])),
 			a2i(matches[2]),
 			hr,
@@ -280,5 +295,5 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 		), nil
 	}
 
-	return time.Time{}, fmt.Errorf("parsing time %q: parse failed")
+	return time.Time{}, fmt.Errorf("parsing time %q: parse failed", origTimeStr)
 }
