@@ -132,6 +132,10 @@ func TestStr2Time(t *testing.T) {
 			name:  "ISO 8601 formats 9",
 			input: "199402030000",
 		},
+		{
+			name:  "Windows 'dir' format",
+			input: "02-03-94  12:00AM",
+		},
 	}
 	for _, tc := range testCases {
 		out, err := Str2Time(tc.input, time.UTC)

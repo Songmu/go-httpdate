@@ -51,6 +51,11 @@ var (
 		`)?\s*` + // optional clock
 		`([-+]?\d\d?:?(:?\d\d)?|Z|z)?` + // 8. offset (Z is "zero meridian", i.e. GMT)
 		`\s*$`)
+	winDirReg = regexp.MustCompile(`^(\d{2})-` + // 1. mumerical month
+		`(\d{2})-` + // 2. day
+		`(\d{2})\s+` + // 3. year
+		`(\d\d?):(\d\d)([APap][Mm])` + // 4,5,6. hour:min AM/PM
+		`\s*$`)
 )
 
 var shortMonth2Month = map[string]time.Month{
@@ -111,8 +116,8 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 	timeStr = uselessWdayReg.ReplaceAllString(timeStr, "")
 
 	if matches := mostFormatReg.FindStringSubmatch(timeStr); len(matches) > 0 {
-		maybeAMPM := strings.ToLower(matches[8])
-		if maybeAMPM != "am" || maybeAMPM != "pm" {
+		maybeAMPM := strings.ToUpper(matches[8])
+		if maybeAMPM != "AM" && maybeAMPM != "PM" {
 			var l *time.Location
 			if matches[8] != "" {
 				l2, err := time.LoadLocation(matches[8])
@@ -236,5 +241,34 @@ func Str2Time(timeStr string, loc *time.Location) (time.Time, error) {
 		}
 		return d, nil
 	}
+
+	if matches := winDirReg.FindStringSubmatch(timeStr); len(matches) > 0 {
+		l := loc
+		if l == nil {
+			l = time.UTC
+		}
+		hr := a2i(matches[4])
+		switch strings.ToUpper(matches[6]) {
+		case "AM":
+			if hr == 12 {
+				hr = 0
+			}
+		case "PM":
+			if hr != 12 {
+				hr += 12
+			}
+		}
+		return time.Date(
+			a2i(matches[3])+1900,
+			time.Month(a2i(matches[1])),
+			a2i(matches[2]),
+			hr,
+			a2i(matches[5]),
+			0,
+			0,
+			l,
+		), nil
+	}
+
 	return time.Time{}, fmt.Errorf("not implemented")
 }
