@@ -100,17 +100,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		loc = time.Local
 	}
 	if m := fastReg.FindStringSubmatch(origTimeStr); len(m) > 0 {
-		d := time.Date(
-			a2i(m[3]),
-			shortMon2Mon[m[2]],
-			a2i(m[1]),
-			a2i(m[4]),
-			a2i(m[5]),
-			a2i(m[6]),
-			0,
-			time.UTC,
-		)
-		return d, nil
+		return time.Date(a2i(m[3]), shortMon2Mon[m[2]], a2i(m[1]), a2i(m[4]), a2i(m[5]), a2i(m[6]), 0, time.UTC), nil
 	}
 	timeStr := strings.TrimSpace(origTimeStr)
 	timeStr = uselessWdayReg.ReplaceAllString(timeStr, "")
@@ -152,17 +142,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 			if l == nil {
 				l = loc
 			}
-			d := time.Date(
-				adjustYear(m[3]),
-				shortMon2Mon[m[2]],
-				a2i(m[1]),
-				a2i(m[4]),
-				a2i(m[5]),
-				a2i(m[6]),
-				0,
-				l,
-			)
-			return d, nil
+			return time.Date(adjustYear(m[3]), shortMon2Mon[m[2]], a2i(m[1]), a2i(m[4]), a2i(m[5]), a2i(m[6]), 0, l), nil
 		}
 	}
 
@@ -174,17 +154,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		if l == nil {
 			l = loc
 		}
-		d := time.Date(
-			adjustYear(m[7]),
-			shortMon2Mon[m[1]],
-			a2i(m[2]),
-			a2i(m[3]),
-			a2i(m[4]),
-			a2i(m[5]),
-			0,
-			l,
-		)
-		return d, nil
+		return time.Date(adjustYear(m[7]), shortMon2Mon[m[1]], a2i(m[2]), a2i(m[3]), a2i(m[4]), a2i(m[5]), 0, l), nil
 	}
 
 	if m := unixLsReg.FindStringSubmatch(timeStr); len(m) > 0 {
@@ -192,16 +162,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		if m[3] == "" {
 			y = time.Now().Year()
 		}
-		return time.Date(
-			y,
-			shortMon2Mon[m[1]],
-			a2i(m[2]),
-			a2i(m[4]),
-			a2i(m[5]),
-			a2i(m[6]),
-			0,
-			loc,
-		), nil
+		return time.Date(y, shortMon2Mon[m[1]], a2i(m[2]), a2i(m[4]), a2i(m[5]), a2i(m[6]), 0, loc), nil
 	}
 
 	if m := iso8601Reg.FindStringSubmatch(timeStr); len(m) > 0 {
@@ -223,17 +184,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 				nsec = a2i(fracStr) * int(math.Pow(10, float64(of)))
 			}
 		}
-		d := time.Date(
-			a2i(m[1]),
-			time.Month(a2i(m[2])),
-			a2i(m[3]),
-			a2i(m[4]),
-			a2i(m[5]),
-			a2i(m[6]),
-			nsec,
-			l,
-		)
-		return d, nil
+		return time.Date(a2i(m[1]), time.Month(a2i(m[2])), a2i(m[3]), a2i(m[4]), a2i(m[5]), a2i(m[6]), nsec, l), nil
 	}
 
 	if m := winDirReg.FindStringSubmatch(timeStr); len(m) > 0 {
@@ -245,16 +196,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		} else if ampm == "PM" && hr != 12 {
 			hr += 12
 		}
-		return time.Date(
-			adjustYear(m[3]),
-			time.Month(a2i(m[1])),
-			a2i(m[2]),
-			hr,
-			a2i(m[5]),
-			0,
-			0,
-			l,
-		), nil
+		return time.Date(adjustYear(m[3]), time.Month(a2i(m[1])), a2i(m[2]), hr, a2i(m[5]), 0, 0, l), nil
 	}
 
 	return time.Time{}, fmt.Errorf("parsing time %q: parse failed", origTimeStr)
