@@ -201,3 +201,8 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 
 	return time.Time{}, fmt.Errorf("parsing time %q: parse failed", origTimeStr)
 }
+
+// Time2Str returns RFC1123 formatted date
+func Time2Str(t time.Time) string {
+	return t.In(time.FixedZone("GMT", 0)).Format(time.RFC1123)
+}
