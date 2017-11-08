@@ -95,7 +95,55 @@ func offsetStr2offset(str string) int {
 	return 0
 }
 
-// Str2Time detect date format from string and parse it
+// Str2Time will try to convert a date string, and then return it as a
+// `time.Time`. If the date is unrecognized, error will be returned.
+//
+// The function is able to parse the following formats:
+//
+//  "Wed, 09 Feb 1994 22:23:32 GMT"       -- HTTP format
+//  "Thu Feb  3 17:03:55 GMT 1994"        -- ctime(3) format
+//  "Thu Feb  3 00:00:00 1994",           -- ANSI C asctime() format
+//  "Tuesday, 08-Feb-94 14:15:29 GMT"     -- old rfc850 HTTP format
+//  "Tuesday, 08-Feb-1994 14:15:29 GMT"   -- broken rfc850 HTTP format
+//
+//  "03/Feb/1994:17:03:55 -0700"   -- common logfile format
+//  "09 Feb 1994 22:23:32 GMT"     -- HTTP format (no weekday)
+//  "08-Feb-94 14:15:29 GMT"       -- rfc850 format (no weekday)
+//  "08-Feb-1994 14:15:29 GMT"     -- broken rfc850 format (no weekday)
+//
+//  "1994-02-03 14:15:29 -0100"    -- ISO 8601 format
+//  "1994-02-03 14:15:29"          -- zone is optional
+//  "1994-02-03"                   -- only date
+//  "1994-02-03T14:15:29"          -- Use T as separator
+//  "19940203T141529Z"             -- ISO 8601 compact format
+//  "19940203"                     -- only date
+//
+//  "08-Feb-94"         -- old rfc850 HTTP format    (no weekday, no time)
+//  "08-Feb-1994"       -- broken rfc850 HTTP format (no weekday, no time)
+//  "09 Feb 1994"       -- proposed new HTTP format  (no weekday, no time)
+//  "03/Feb/1994"       -- common logfile format     (no time, no offset)
+//
+//  "Feb  3  1994"      -- Unix 'ls -l' format
+//  "Feb  3 17:03"      -- Unix 'ls -l' format
+//
+//  "11-15-96  03:52PM" -- Windows 'dir' format
+//
+// The parser ignores leading and trailing whitespace.  It also allow the
+// seconds to be missing and the month to be numerical in most formats.
+//
+// If the year is missing, then we assume that the date is the first
+// matching date I<before> current month.  If the year is given with only
+// 2 digits, then parse_date() will select the century that makes the
+// year closest to the current date.
+//
+// If no timezones are detected from string, location specified by 2nd argument
+// is used. When the location is also nil, time.Local used.
+// Please note that the returned `time.Time` does not always have the location
+// specified. It is used only when the timezone can not be detected.
+// If you want to fix the location in the returned time, please specify
+// the location by yourself as follows.
+//
+//     t = t.In(time.Local)
 func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 	if loc == nil {
 		loc = time.Local
@@ -207,7 +255,16 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("parsing time %q: parse failed", origTimeStr)
 }
 
-// Time2Str returns RFC1123 formatted date
+// Time2Str converts a `time.Time` to a string.
+// Note. This is only an implementation as HTTP:Datet#time2str's porting and
+// may not be very practical.
+//
+// The string returned is in the format preferred for the HTTP protocol.
+// This is a fixed length subset of the format defined by RFC 1123,
+// represented in Universal Time (GMT).  An example of a time stamp
+// in this format is:
+//
+//    Sun, 06 Nov 1994 08:49:37 GMT
 func Time2Str(t time.Time) string {
 	return t.In(time.FixedZone("GMT", 0)).Format(time.RFC1123)
 }
