@@ -57,6 +57,7 @@ var (
 		`(\d{2})\s+` + // 3. year
 		`(\d\d?):(\d\d)([APap][Mm])` + // 4,5,6. hour:min AM/PM
 		`\s*$`)
+	looksLikeTZReg = regexp.MustCompile("^[A-Z][A-Za-z]{2}")
 )
 
 var shortMon2Mon = map[string]time.Month{
@@ -137,7 +138,11 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 				l = loadLoc(m[8])
 			}
 			if l == nil && m[7] != "" {
-				l = time.FixedZone(m[8], offsetStr2offset(m[7]))
+				locName := m[8]
+				if !looksLikeTZReg.MatchString(locName) {
+					locName = ""
+				}
+				l = time.FixedZone(locName, offsetStr2offset(m[7]))
 			}
 			if l == nil {
 				l = loc
