@@ -96,7 +96,9 @@ func offsetStr2offset(str string) int {
 
 // Str2Time detect date format from string and parse it
 func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
-	// No time zone is detected from timeStr and loc is nil, UTC location is used
+	if loc == nil {
+		loc = time.Local
+	}
 	if m := fastReg.FindStringSubmatch(origTimeStr); len(m) > 0 {
 		d := time.Date(
 			a2i(m[3]),
@@ -108,9 +110,6 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 			0,
 			time.UTC,
 		)
-		if loc != nil {
-			d = d.In(loc)
-		}
 		return d, nil
 	}
 	timeStr := strings.TrimSpace(origTimeStr)
@@ -143,11 +142,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 				l = time.FixedZone(m[8], offsetStr2offset(m[7]))
 			}
 			if l == nil {
-				if loc != nil {
-					l = loc
-				} else {
-					l = time.UTC
-				}
+				l = loc
 			}
 			d := time.Date(
 				adjustYear(m[3]),
@@ -159,9 +154,6 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 				0,
 				l,
 			)
-			if loc != nil {
-				d = d.In(loc)
-			}
 			return d, nil
 		}
 	}
@@ -175,11 +167,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 			}
 		}
 		if l == nil {
-			if loc != nil {
-				l = loc
-			} else {
-				l = time.UTC
-			}
+			l = loc
 		}
 		d := time.Date(
 			adjustYear(m[7]),
@@ -191,17 +179,10 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 			0,
 			l,
 		)
-		if loc != nil {
-			d = d.In(loc)
-		}
 		return d, nil
 	}
 
 	if m := unixLsReg.FindStringSubmatch(timeStr); len(m) > 0 {
-		l := loc
-		if l == nil {
-			l = time.UTC
-		}
 		y := a2i(m[3])
 		if m[3] == "" {
 			y = time.Now().Year()
@@ -214,7 +195,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 			a2i(m[5]),
 			a2i(m[6]),
 			0,
-			l,
+			loc,
 		), nil
 	}
 
@@ -225,11 +206,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		} else if m[8] != "" {
 			l = time.FixedZone("", offsetStr2offset(m[8]))
 		} else {
-			if loc != nil {
-				l = loc
-			} else {
-				l = time.UTC
-			}
+			l = loc
 		}
 		nsec := 0
 		fracStr := m[7]
@@ -251,17 +228,11 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 			nsec,
 			l,
 		)
-		if loc != nil {
-			d = d.In(loc)
-		}
 		return d, nil
 	}
 
 	if m := winDirReg.FindStringSubmatch(timeStr); len(m) > 0 {
 		l := loc
-		if l == nil {
-			l = time.UTC
-		}
 		hr := a2i(m[4])
 		ampm := strings.ToUpper(m[6])
 		if ampm == "AM" && hr == 12 {

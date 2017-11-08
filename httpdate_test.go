@@ -143,7 +143,7 @@ func TestStr2Time(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s error should be nil but: %s", tc.name, err)
 		}
-
+		out = out.In(time.UTC)
 		if !reflect.DeepEqual(out, expect) {
 			t.Errorf("Parse failed(%s):\n out:  %+v\n want: %+v", tc.name, out, expect)
 		}
@@ -234,7 +234,7 @@ func TestStr2Time_time(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s error should be nil but: %s", tc.name, err)
 		}
-
+		out = out.In(time.UTC)
 		if !reflect.DeepEqual(out, expect) {
 			t.Errorf("Parse failed(%s):\n out:  %+v\n want: %+v", tc.name, out, expect)
 		}
@@ -278,7 +278,7 @@ func TestStr2Time_noSec(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s error should be nil but: %s", tc.name, err)
 		}
-
+		out = out.In(time.UTC)
 		if !reflect.DeepEqual(out, expect) {
 			t.Errorf("Parse failed(%s/%s):\n out:  %+v\n want: %+v", tc.name, tc.input, out, expect)
 		}
@@ -307,6 +307,7 @@ func TestStr2Time_nsec(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s error should be nil but: %s", tc.name, err)
 		}
+		out = out.In(time.UTC)
 		if !reflect.DeepEqual(out, tc.want) {
 			t.Errorf("Parse failed(%s/%s):\n out:  %+v\n want: %+v", tc.name, tc.input, out, tc.want)
 		}
