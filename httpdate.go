@@ -126,6 +126,17 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		return y + 2000
 	}
 
+	loadLoc := func(str string) *time.Location {
+		switch strings.ToUpper(str) {
+		case "Z":
+			return time.UTC
+		case "UT":
+			str = "UTC"
+		}
+		l, _ := time.LoadLocation(str)
+		return l
+	}
+
 	if m := mostFormatReg.FindStringSubmatch(timeStr); len(m) > 0 {
 		switch strings.ToUpper(m[8]) {
 		case "AM", "PM":
@@ -133,10 +144,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		default:
 			var l *time.Location
 			if m[8] != "" {
-				l2, err := time.LoadLocation(m[8])
-				if err == nil {
-					l = l2
-				}
+				l = loadLoc(m[8])
 			}
 			if l == nil && m[7] != "" {
 				l = time.FixedZone(m[8], offsetStr2offset(m[7]))
@@ -161,10 +169,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 	if m := ctimeAndAsctimeReg.FindStringSubmatch(timeStr); len(m) > 0 {
 		var l *time.Location
 		if m[6] != "" {
-			l2, err := time.LoadLocation(m[6])
-			if err == nil {
-				l = l2
-			}
+			l = loadLoc(m[6])
 		}
 		if l == nil {
 			l = loc
