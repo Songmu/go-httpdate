@@ -149,7 +149,7 @@ func Str2Time(origTimeStr string, loc *time.Location) (time.Time, error) {
 		loc = time.Local
 	}
 	if m := fastReg.FindStringSubmatch(origTimeStr); len(m) > 0 {
-		return time.Date(a2i(m[3]), shortMon2Mon[m[2]], a2i(m[1]), a2i(m[4]), a2i(m[5]), a2i(m[6]), 0, time.UTC), nil
+		return time.Date(a2i(m[3]), shortMon2Mon[m[2]], a2i(m[1]), a2i(m[4]), a2i(m[5]), a2i(m[6]), 0, time.FixedZone("GMT", 0)), nil
 	}
 	timeStr := strings.TrimSpace(origTimeStr)
 	timeStr = uselessWdayReg.ReplaceAllString(timeStr, "")
