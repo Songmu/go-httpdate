@@ -1,3 +1,9 @@
+CURRENT_REVISION = $(shell git rev-parse --short HEAD)
+BUILD_LDFLAGS = "-X github.com/Songmu/go-httpdate.revision=$(CURRENT_REVISION)"
+ifdef update
+  u=-u
+endif
+
 deps:
 	go get -d -v ./...
 
@@ -5,9 +11,12 @@ test-deps:
 	go get -d -v -t ./...
 
 devel-deps:
-	go get github.com/golang/lint/golint
-	go get golang.org/x/tools/cmd/cover
-	go get github.com/mattn/goveralls
+	go get ${u} github.com/golang/lint/golint
+	go get ${u} github.com/mattn/goveralls
+	go get ${u} github.com/motemen/gobump
+	go get ${u} github.com/laher/goxc
+	go get ${u} github.com/Songmu/ghch
+	go get ${u} github.com/tcnksm/ghr
 
 test: test-deps
 	go test ./...
@@ -19,4 +28,16 @@ lint: devel-deps
 cover: devel-deps
 	goveralls
 
-.PHONY: test deps lint cover
+build: deps
+	go build -ldflags=$(BUILD_LDFLAGS) ./cmd/httpdate
+
+crossbuild: devel-deps
+	goxc -pv=v$(shell gobump show -r) -build-ldflags=$(BUILD_LDFLAGS) \
+	  -os=linux,darwin,windows,freebsd -arch=amd64 -d=./dist \
+	  -tasks=clean-destination,xc,archive,rmbin
+
+release: devel-deps
+	_tools/releng
+	_tools/upload_artifacts
+
+.PHONY: deps devel-deps test lint cover build crossbuild release
