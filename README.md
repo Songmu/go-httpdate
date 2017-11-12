@@ -18,6 +18,14 @@ Well dealing the date formats used by the HTTP protocol (and then some more).
 
 Is is golang porting of perl's [HTTP::Date](https://metacpan.org/pod/HTTP::Date) (ported only `str2time` interface)
 
+## Synopsis
+
+    # try to parse string and returns `time.Time` or error
+    t1, err := httpdate.Str2Time("Thu, 03 Feb 1994 12:33:44 GMT", time.UTC)
+    t2, err := httpdate.Str2Time("2017-11-11", time.UTC)
+    t3, err := httpdate.Str2Time("Thu Nov  9 18:20:31 GMT 2017", time.UTC)
+    t4, err := httpdate.Str2Time("08-Feb-94 14:15:29 GMT", time.UTC)
+
 ## Supported Format
 
 -  "Wed, 09 Feb 1994 22:23:32 GMT"       -- HTTP format
