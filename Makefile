@@ -11,7 +11,7 @@ test-deps:
 	go get -d -v -t ./...
 
 devel-deps:
-	go get ${u} github.com/golang/lint/golint
+	go get ${u} golang.org/x/lint/golint
 	go get ${u} github.com/mattn/goveralls
 	go get ${u} github.com/motemen/gobump
 	go get ${u} github.com/laher/goxc
